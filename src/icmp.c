@@ -25,6 +25,7 @@ static int icmp_input(const struct ip_hdr *ip_hdr __unused,
 {
     struct icmp *net_msg = (struct icmp *) payload;
     struct icmp hdr;
+    LOG(LOG_DEBUG, "SIZE OF PACKET WITHOUT ICMP HEADER %lu \n sizeof(struct icmp): %lu \n", bsize - sizeof(struct icmp), sizeof(struct icmp));
 
     if (bsize < sizeof(struct icmp)) {
         LOG(LOG_ERR, "Invalid ICMP message size");

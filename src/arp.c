@@ -180,7 +180,7 @@ static int arp_input(const struct ether_hdr *hdr __unused,
         switch (arp.arp_oper) {
         case ARP_OPER_REQUEST:
             ip2str(arp.arp_tpa, str_ip);
-            LOG(LOG_DEBUG, "ARP request: %s", str_ip);
+//   LOG(LOG_DEBUG, "ARP request: %s", str_ip);
 
             if (!ip_route_find_by_iface(arp.arp_tpa, &route)) {
                 arp_net->arp_oper = htons(ARP_OPER_REPLY);
@@ -255,7 +255,7 @@ int arp_gratuitous(int ether_handle, in_addr_t spa)
     memset(msg.arp_tha, 0, sizeof(mac_addr_t));
 
     ip2str(spa, str_ip);
-    LOG(LOG_DEBUG, "Announce %s", str_ip);
+  //  LOG(LOG_DEBUG, "Announce %s", str_ip);
 
     arp_hton(&msg, &msg);
     retval = ether_send(ether_handle, mac_broadcast_addr, ETHER_PROTO_ARP,

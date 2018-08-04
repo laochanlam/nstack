@@ -150,7 +150,7 @@ static void *nstack_ingress_thread(void *arg)
         struct ether_hdr hdr;
         int retval;
 
-        LOG(LOG_DEBUG, "Waiting for rx");
+      //  LOG(LOG_DEBUG, "Waiting for rx");
 
         retval =
             ether_receive(ether_handle, &hdr, rx_buffer, sizeof(rx_buffer));
@@ -172,7 +172,7 @@ static void *nstack_ingress_thread(void *arg)
         }
 
         if (eval_timer()) {
-            LOG(LOG_DEBUG, "tick");
+        //    LOG(LOG_DEBUG, "tick");
             run_periodic_tasks(delta_time);
         }
 

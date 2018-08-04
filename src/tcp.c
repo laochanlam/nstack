@@ -221,8 +221,8 @@ static int tcp_fsm(struct tcp_conn_tcb *conn, struct tcp_hdr *rs)
             conn->recv_next = rs->tcp_ack_num;
             conn->send_next = rs->tcp_seqno + 1;
             // LOG(LOG_INFO, "%d", ((uint32_t *) &rs)[3]);
-            LOG(LOG_INFO, "\nrs->tcp_seq_no : %u \n rs->tcp_ack_no : %u \n", rs->tcp_seqno, rs->tcp_ack_num);
-            LOG(LOG_INFO, "\nconn->recv_next : %u \n conn->send_next : %u", conn->recv_next, conn->send_next);   
+            LOG(LOG_INFO, "\n\nSEQ : %u \nACK : %u \n", rs->tcp_seqno, rs->tcp_ack_num);
+            LOG(LOG_INFO, "conn->recv_next : %u \nconn->send_next : %u\n", conn->recv_next, conn->send_next);
             return tcp_hdr_size(rs);
         }
         return 0;
@@ -231,8 +231,8 @@ static int tcp_fsm(struct tcp_conn_tcb *conn, struct tcp_hdr *rs)
 
         if ((rs->tcp_flags & TCP_ACK) && rs->tcp_seqno == conn->recv_next &&
             rs->tcp_ack_num == conn->send_next) {
-                LOG(LOG_INFO, "\nrs->tcp_seq_no : %u \n rs->tcp_ack_no : %u \n", rs->tcp_seqno, rs->tcp_ack_num);
-                LOG(LOG_INFO, "\nconn->recv_next : %u \n conn->send_next : %u", conn->recv_next, conn->send_next);
+            LOG(LOG_INFO, "\n\nSEQ : %u \nACK : %u \n", rs->tcp_seqno, rs->tcp_ack_num);
+            LOG(LOG_INFO, "conn->recv_next : %u \nconn->send_next : %u\n", conn->recv_next, conn->send_next);
             conn->state = TCP_ESTABLISHED;
             return 0;
         }
@@ -245,8 +245,8 @@ static int tcp_fsm(struct tcp_conn_tcb *conn, struct tcp_hdr *rs)
         return tcp_hdr_size(rs);
     case TCP_ESTABLISHED:
         LOG(LOG_INFO, "TCP state: TCP_ESTABLISHED");
-            LOG(LOG_INFO, "\nrs->tcp_seq_no : %u \n rs->tcp_ack_no : %u \n", rs->tcp_seqno, rs->tcp_ack_num);
-            LOG(LOG_INFO, "\nconn->recv_next : %u \n conn->send_next : %u", conn->recv_next, conn->send_next);
+        LOG(LOG_INFO, "\n\nSEQ : %u \nACK : %u \n", rs->tcp_seqno, rs->tcp_ack_num);
+        LOG(LOG_INFO, "conn->recv_next : %u \nconn->send_next : %u\n", conn->recv_next, conn->send_next);
         if (rs->tcp_flags & TCP_FIN) { /* Close connection. */
             LOG(LOG_INFO, "[CLOSE CONNECTION PACKET DETECTED]");
             rs->tcp_flags |= TCP_ACK;
@@ -269,6 +269,7 @@ static int tcp_fsm(struct tcp_conn_tcb *conn, struct tcp_hdr *rs)
 
         return 0;
     case TCP_LAST_ACK:
+	LOG(LOG_INFO, "TCP state: TCP_LAST_ACK");
         if (rs->tcp_flags & TCP_ACK) {
             /* TODO Remove the connection */
             conn->state = TCP_CLOSED;
@@ -300,7 +301,7 @@ static int tcp_input(const struct ip_hdr *ip_hdr,
 
         return -EBADMSG;
     }
-    LOG(LOG_DEBUG, "SIZE OF PACKET WITHOUT TCP HEADER: %u \n  TCP HEADER: %d \n", bsize - sizeof(struct tcp_hdr),  tcp_hdr_size(tcp));
+    LOG(LOG_DEBUG, "bsize: %u \n  sizeof(struct tcp_hdr): %d \n", bsize,  sizeof(struct tcp_hdr));
     memset(&attr, 0, sizeof(attr));
     attr.local.inet4_addr = ip_hdr->ip_dst;
     attr.local.port = ntohs(tcp->tcp_dport);
@@ -317,7 +318,7 @@ static int tcp_input(const struct ip_hdr *ip_hdr,
 #endif
 
     tcp_ntoh(tcp, tcp);
-
+    LOG(LOG_DEBUG, "TCP HEADER (?) from tcp_hdr_sie(tcp): %d\n", tcp_hdr_size(tcp));
     struct tcp_conn_tcb *conn = tcp_find_connection(&attr);
     if (!conn && (tcp->tcp_flags & TCP_SYN)) { /* New connection */
         char rem_str[IP_STR_LEN];

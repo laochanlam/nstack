@@ -12,7 +12,7 @@ int ether_input(const struct ether_hdr *hdr, uint8_t *payload, size_t bsize)
     struct _ether_proto_handler **tmpp;
     struct _ether_proto_handler *proto;
     int retval;
-    LOG(LOG_DEBUG, "SIZE OF PACKET WITHOUT ETHERNET HEADER: %lu \n  sizeof(struct ETHERNET): %lu \n", bsize - sizeof(struct ether_hdr),  sizeof(struct ether_hdr));
+    LOG(LOG_DEBUG, "bsize: %lu \n", bsize);
     SET_FOREACH (tmpp, _ether_proto_handlers) {
         proto = *tmpp;
         if (proto->proto_id == hdr->h_proto) {

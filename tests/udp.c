@@ -25,7 +25,6 @@ int main(void)
         perror("Failed to open socket");
         exit(1);
     }
-
     while (1) {
         if (sendto(s, buf, sizeof(buf), 0, (struct sockaddr *) &si_other,
                    sizeof(struct sockaddr_in)) == -1) {
@@ -33,7 +32,6 @@ int main(void)
             exit(1);
         }
     }
-
     close(s);
     return 0;
 }

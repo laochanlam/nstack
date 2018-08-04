@@ -126,7 +126,7 @@ int ip_input(const struct ether_hdr *e_hdr, uint8_t *payload, size_t bsize)
     struct _ip_proto_handler *proto;
     size_t hlen;
 
-    LOG(LOG_DEBUG, "SIZE OF PACKET WITHOUT IP HEADER: %u \n  sizeof(struct ip_hdr): %u \n", bsize - sizeof(struct ip_hdr),  sizeof(struct ip_hdr));
+    LOG(LOG_DEBUG, "bsize: %u \n  sizeof(struct ip_hdr): %u \n", bsize,  sizeof(struct ip_hdr));
     if (e_hdr) {
         ip_ntoh(ip, ip);
     }
@@ -137,6 +137,7 @@ int ip_input(const struct ether_hdr *e_hdr, uint8_t *payload, size_t bsize)
     }
 
     hlen = ip_hdr_hlen(ip);
+    LOG(LOG_DEBUG, "HLEN (IP header size(?)): %lu\n", hlen);
     if (hlen < 20) {
         LOG(LOG_ERR, "Incorrect packet header length: %d", (int) hlen);
         return 0;
