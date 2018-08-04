@@ -220,7 +220,9 @@ static int tcp_fsm(struct tcp_conn_tcb *conn, struct tcp_hdr *rs)
             conn->state = TCP_SYN_RCVD;
             conn->recv_next = rs->tcp_ack_num;
             conn->send_next = rs->tcp_seqno + 1;
-            LOG(LOG_INFO, "%d", ((uint32_t *) &rs)[3]);
+            // LOG(LOG_INFO, "%d", ((uint32_t *) &rs)[3]);
+            LOG(LOG_INFO, "\nrs->tcp_seq_no : %u \n rs->tcp_ack_no : %u \n", rs->tcp_seqno, rs->tcp_ack_num);
+            LOG(LOG_INFO, "\nconn->recv_next : %u \n conn->send_next : %u", conn->recv_next, conn->send_next);   
             return tcp_hdr_size(rs);
         }
         return 0;
@@ -229,6 +231,8 @@ static int tcp_fsm(struct tcp_conn_tcb *conn, struct tcp_hdr *rs)
 
         if ((rs->tcp_flags & TCP_ACK) && rs->tcp_seqno == conn->recv_next &&
             rs->tcp_ack_num == conn->send_next) {
+                LOG(LOG_INFO, "\nrs->tcp_seq_no : %u \n rs->tcp_ack_no : %u \n", rs->tcp_seqno, rs->tcp_ack_num);
+                LOG(LOG_INFO, "\nconn->recv_next : %u \n conn->send_next : %u", conn->recv_next, conn->send_next);
             conn->state = TCP_ESTABLISHED;
             return 0;
         }
@@ -237,12 +241,14 @@ static int tcp_fsm(struct tcp_conn_tcb *conn, struct tcp_hdr *rs)
         rs->tcp_seqno = conn->send_next;
 
         conn->recv_next = rs->tcp_ack_num;
-        conn->send_next = rs->tcp_seqno + 1;
+        conn->send_next = rs->tcp_seqno + 1; 
         return tcp_hdr_size(rs);
     case TCP_ESTABLISHED:
         LOG(LOG_INFO, "TCP state: TCP_ESTABLISHED");
-
+            LOG(LOG_INFO, "\nrs->tcp_seq_no : %u \n rs->tcp_ack_no : %u \n", rs->tcp_seqno, rs->tcp_ack_num);
+            LOG(LOG_INFO, "\nconn->recv_next : %u \n conn->send_next : %u", conn->recv_next, conn->send_next);
         if (rs->tcp_flags & TCP_FIN) { /* Close connection. */
+            LOG(LOG_INFO, "[CLOSE CONNECTION PACKET DETECTED]");
             rs->tcp_flags |= TCP_ACK;
             rs->tcp_ack_num = rs->tcp_seqno + 1;
             rs->tcp_seqno = conn->send_next;
@@ -251,6 +257,8 @@ static int tcp_fsm(struct tcp_conn_tcb *conn, struct tcp_hdr *rs)
             conn->recv_next = rs->tcp_ack_num;
             conn->send_next = rs->tcp_seqno + 1;
             return tcp_hdr_size(rs);
+        } else {
+            LOG(LOG_INFO, "[PACKET RECEIVED IN STATE TCP_ESTABLISHED AND NOT FOR CLOSE]");
         }
         return 0;
     case TCP_FIN_WAIT_1:
@@ -292,7 +300,7 @@ static int tcp_input(const struct ip_hdr *ip_hdr,
 
         return -EBADMSG;
     }
-
+    LOG(LOG_DEBUG, "SIZE OF PACKET WITHOUT TCP HEADER: %u \n  TCP HEADER: %d \n", bsize - sizeof(struct tcp_hdr),  tcp_hdr_size(tcp));
     memset(&attr, 0, sizeof(attr));
     attr.local.inet4_addr = ip_hdr->ip_dst;
     attr.local.port = ntohs(tcp->tcp_dport);
@@ -330,6 +338,7 @@ static int tcp_input(const struct ip_hdr *ip_hdr,
 
     int retval = tcp_fsm(conn, tcp);
     if (retval > 0) { /* Fast reply */
+        LOG(LOG_INFO, "INSIDE FAST REPLY");
         tcp->tcp_sport = attr.local.port;
         tcp->tcp_dport = attr.remote.port;
         tcp_hton(&attr.local, &attr.remote, tcp, tcp, retval);

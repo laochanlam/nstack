@@ -126,6 +126,7 @@ int ip_input(const struct ether_hdr *e_hdr, uint8_t *payload, size_t bsize)
     struct _ip_proto_handler *proto;
     size_t hlen;
 
+    LOG(LOG_DEBUG, "SIZE OF PACKET WITHOUT IP HEADER: %u \n  sizeof(struct ip_hdr): %u \n", bsize - sizeof(struct ip_hdr),  sizeof(struct ip_hdr));
     if (e_hdr) {
         ip_ntoh(ip, ip);
     }
