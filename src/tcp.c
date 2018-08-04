@@ -199,7 +199,7 @@ static void tcp_ntoh(const struct tcp_hdr *net, struct tcp_hdr *host)
     /* TODO Handle opts */
 }
 
-static int tcp_fsm(struct tcp_conn_tcb *conn, struct tcp_hdr *rs)
+static int tcp_fsm(struct tcp_conn_tcb *conn, struct tcp_hdr *rs, size_t bsize)
 {
     switch (conn->state) {
     case TCP_CLOSED:
@@ -223,6 +223,7 @@ static int tcp_fsm(struct tcp_conn_tcb *conn, struct tcp_hdr *rs)
             // LOG(LOG_INFO, "%d", ((uint32_t *) &rs)[3]);
             LOG(LOG_INFO, "\n\nSEQ : %u \nACK : %u \n", rs->tcp_seqno, rs->tcp_ack_num);
             LOG(LOG_INFO, "conn->recv_next : %u \nconn->send_next : %u\n", conn->recv_next, conn->send_next);
+            LOG(LOG_INFO, "tcp_hdr_size(rs) %u\n", tcp_hdr_size(rs));
             return tcp_hdr_size(rs);
         }
         return 0;
@@ -245,6 +246,20 @@ static int tcp_fsm(struct tcp_conn_tcb *conn, struct tcp_hdr *rs)
         return tcp_hdr_size(rs);
     case TCP_ESTABLISHED:
         LOG(LOG_INFO, "TCP state: TCP_ESTABLISHED");
+        if (rs->tcp_flags & TCP_ACK && rs->tcp_flags & TCP_PSH) {
+            LOG(LOG_INFO, "[DATA TRANSMITION DETECTED]");
+            rs->tcp_flags &= ~TCP_PSH;
+            rs->tcp_ack_num = rs->tcp_seqno + (bsize - tcp_hdr_size(rs));
+            rs->tcp_seqno = conn->send_next;
+            
+            conn->recv_next = rs->tcp_ack_num;
+            conn->send_next = rs->tcp_seqno; 
+            LOG(LOG_INFO, "\n\nSEQ : %u \nACK : %u \n", rs->tcp_seqno, rs->tcp_ack_num);
+            LOG(LOG_INFO, "conn->recv_next : %u \nconn->send_next : %u\n", conn->recv_next, conn->send_next);
+            LOG(LOG_INFO, "tcp_hdr_size(rs) %u\n", tcp_hdr_size(rs));
+            
+            return tcp_hdr_size(rs);
+        }
         LOG(LOG_INFO, "\n\nSEQ : %u \nACK : %u \n", rs->tcp_seqno, rs->tcp_ack_num);
         LOG(LOG_INFO, "conn->recv_next : %u \nconn->send_next : %u\n", conn->recv_next, conn->send_next);
         if (rs->tcp_flags & TCP_FIN) { /* Close connection. */
@@ -295,6 +310,7 @@ static int tcp_input(const struct ip_hdr *ip_hdr,
 {
     struct tcp_conn_attr attr;
     struct tcp_hdr *tcp = (struct tcp_hdr *) payload;
+    size_t hlen;
 
     if (bsize < sizeof(struct tcp_hdr)) {
         LOG(LOG_INFO, "Datagram size too small");
@@ -318,7 +334,8 @@ static int tcp_input(const struct ip_hdr *ip_hdr,
 #endif
 
     tcp_ntoh(tcp, tcp);
-    LOG(LOG_DEBUG, "TCP HEADER (?) from tcp_hdr_sie(tcp): %d\n", tcp_hdr_size(tcp));
+    hlen = tcp_hdr_size(tcp);
+    LOG(LOG_DEBUG, "TCP HEADER (?) from tcp_hdr_sie(tcp): %d\n", hlen);
     struct tcp_conn_tcb *conn = tcp_find_connection(&attr);
     if (!conn && (tcp->tcp_flags & TCP_SYN)) { /* New connection */
         char rem_str[IP_STR_LEN];
@@ -332,12 +349,12 @@ static int tcp_input(const struct ip_hdr *ip_hdr,
         /* TODO Check if we listen the port */
         conn = tcp_new_connection(&attr);
         conn->state = TCP_LISTEN;
-    } else if (!conn || (tcp->tcp_flags & TCP_SYN) || tcp_hdr_size(tcp) < 0) {
+    } else if (!conn || (tcp->tcp_flags & TCP_SYN) || hlen < 0) {
         /* No connection initiated, invalid flag, or invalid header size. */
         return -EINVAL; /* TODO any other error handling needed here? */
     }
 
-    int retval = tcp_fsm(conn, tcp);
+    int retval = tcp_fsm(conn, tcp, bsize);
     if (retval > 0) { /* Fast reply */
         LOG(LOG_INFO, "INSIDE FAST REPLY");
         tcp->tcp_sport = attr.local.port;

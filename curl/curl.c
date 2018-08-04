@@ -62,7 +62,8 @@ int main(int argc, char **argv)
     }
 
     char str[512];
-    snprintf(str, 512, "GET / HTTP/1.1\r\nHost: %s:%s\r\nConnection: close\r\n\r\n", argv[1], argv[2]);
+/*    snprintf(str, 512, "GET / HTTP/1.1\r\nHost: %s:%s\r\nConnection: close\r\n\r\n", argv[1], argv[2]);*/
+    snprintf(str, 512, "laochanlam");
     int len = strlen(str);
     printf("%d", len);
     if (write(sock, str, len) != len) {
