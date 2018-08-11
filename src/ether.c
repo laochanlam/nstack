@@ -15,9 +15,8 @@ int ether_input(const struct ether_hdr *hdr, uint8_t *payload, size_t bsize)
     LOG(LOG_DEBUG, "bsize: %lu \n", bsize);
     SET_FOREACH (tmpp, _ether_proto_handlers) {
         proto = *tmpp;
-        if (proto->proto_id == hdr->h_proto) {
+        if (proto->proto_id == hdr->h_proto)
             break;
-        }
         proto = NULL;
     }
 
